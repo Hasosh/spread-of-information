@@ -108,10 +108,18 @@ ran = spread_of_inormation(G, 30, 0.025, 'random', 'degree')
 cen = spread_of_inormation(G, 30, 0.025, 'central', 'degree')
 mar = spread_of_inormation(G, 30, 0.025, 'marginal', 'degree')
 
+# get percentage of adopters
+ran_perc = [x/len(G.nodes()) for x in ran]
+cen_perc = [x/len(G.nodes()) for x in cen]
+mar_perc = [x/len(G.nodes()) for x in mar]
+
 # plot the number of adopters over time with seaborn
-df = pd.DataFrame({'random': ran, 'central': cen, 'marginal': mar})
+df = pd.DataFrame({'random': ran_perc, 'central': cen_perc, 'marginal': mar_perc})
 sns.lineplot(data=df, palette="tab10", linewidth=2.5, dashes=False)
+plt.xlabel('Time')
+plt.ylabel('Number of Adopters')
 plt.show()
+
 
 
 
