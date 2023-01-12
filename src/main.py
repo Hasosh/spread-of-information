@@ -7,26 +7,27 @@ def main():
     # simulation parameters
     num_simulations = 5
     num_random_graphs = 5
-    time_steps = 15
-    percentage_initial_adopt = 0.025
+    time_steps = 20
+    percentage_initial_adopt = 0.01
 
     averaged_results = dict()
 
     # facebook graph
     # Create a graph from edge list
-    G_fb = nx.read_edgelist('../data/facebook_combined.txt', delimiter=' ') # G_fb = nx.read_edgelist('../data/facebook_combined.txt', delimiter=' ')
+    G_fb = nx.read_edgelist('../data/politician_edges.csv', delimiter=',') # G_fb = nx.read_edgelist('../data/facebook_combined.txt', delimiter=' ')
 
     # preprocess the graph
     G_fb = graph_preprocessing(G_fb)
 
     # show properties
-    # show_and_save_prop(G_fb, 'facebook')
+    show_and_save_prop(G_fb, 'facebook_politician')
 
     # run the simulation
-    ran_avg, cen_avg, mar_avg = run_simulation(G_fb, num_simulations, time_steps, percentage_initial_adopt, 'degree', 'facebook')
+    ran_avg, cen_avg, mar_avg = run_simulation(G_fb, num_simulations, time_steps, percentage_initial_adopt, 'degree', 'facebook_politician')
 
+    #print('Facebook graph finished')
     # save results
-    averaged_results['facebook'] = (ran_avg, cen_avg, mar_avg)
+    averaged_results['facebook_politician'] = (ran_avg, cen_avg, mar_avg)
 
     # random graphs
     collected_results = dict()
@@ -55,6 +56,7 @@ def main():
         ba_ran_perc, ba_cen_perc, ba_mar_perc = run_simulation(G_ba, num_simulations, time_steps, percentage_initial_adopt, 'degree', 'BA')
         nw_ws_ran_perc, nw_ws_cen_perc, nw_ws_mar_perc = run_simulation(G_nw_ws, num_simulations, time_steps, percentage_initial_adopt, 'degree', 'newman_WS')
 
+
         # save results in dictionary
         if i == 0:
             collected_results["ER"] = [(er_ran_perc, er_cen_perc, er_mar_perc)]
@@ -77,18 +79,22 @@ def main():
     # delete collected results for memory saving
     collected_results.clear()
 
+    print('Random graphs finished')
     # plotting the results
     # plotting same graph different adopters
     for key in averaged_results:
         plotting_adopters(averaged_results[key], key)
 
     # plotting different graph same adopters
-    plotting_structure((averaged_results["facebook"][0], averaged_results["ER"][0], averaged_results["WS"][0], averaged_results["BA"][0], averaged_results["newman_WS"][0]), "random")
-    plotting_structure((averaged_results["facebook"][1], averaged_results["ER"][1], averaged_results["WS"][1], averaged_results["BA"][1], averaged_results["newman_WS"][1]), "central")
-    plotting_structure((averaged_results["facebook"][2], averaged_results["ER"][2], averaged_results["WS"][2], averaged_results["BA"][2], averaged_results["newman_WS"][2]), "marginal")
+    plotting_structure((averaged_results['facebook_politician'][0], averaged_results["ER"][0], averaged_results["WS"][0]
+                        , averaged_results["BA"][0], averaged_results["newman_WS"][0]), "random")
+    plotting_structure((averaged_results['facebook_politician'][1], averaged_results["ER"][1], averaged_results["WS"][1]
+                        , averaged_results["BA"][1], averaged_results["newman_WS"][1]), "central")
+    plotting_structure((averaged_results['facebook_politician'][2], averaged_results["ER"][2], averaged_results["WS"][2]
+                        , averaged_results["BA"][2], averaged_results["newman_WS"][2]), "marginal")
 
-    # plotting bass model on facebook network with random adopters
-    #plotting_bass_model(averaged_results["facebook"], "Facebook random")
+    #plotting bass model on facebook network
+    plotting_bass_model(averaged_results['facebook_politician'], "facebook_politician")
 
     end = time.time()
     print("Time taken: ", end - start)

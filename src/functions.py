@@ -231,14 +231,14 @@ def spread_of_information(graph, timestamp, percentage_initial_adopt, type_initi
     t = timestamp
     # list of adopters
     adopters_list = [initial_adopt_num]
-    for i in range(1, t):
+    for i in range(t-1):
         # if full diffusion happened then stop the process
-        if i != 1 and adopters_list[-1] == n:
-            # fill the list with the last value which is the number of nodes
-            adopters_list += [n] * (t - len(adopters_list) + 1)
-            #print(f'Diffusion already stopped at time step: {i+1}')
-            # break out of the outer for loop
-            break
+        if i != 0 and adopters_list[-1] == n:
+             # fill the list with the last value which is the number of nodes
+             adopters_list += [n] * (t - len(adopters_list))
+             #print(f'Diffusion already stopped at time step: {i+1}')
+             # break out of the outer for loop
+             break
         # iterate over nodes
         for node in G.nodes():
             # if the node is not an adopter
@@ -431,8 +431,41 @@ def plotting_bass_model(diff_data, name): # right now ONLY prints bass model on 
     plt.ylabel('Percentage of adopters')
     plt.title(f"Fit of Bass model on {name}")
     plt.legend()
-    plt.savefig(f"../results/{name}_bass_model.png")
+    plt.savefig("../results/random_bass_model.png")
     plt.show()
+
+    print(f"p = {p}, q = {q}, m = {m}")
+
+    # fit bass model and get parameters
+    bass_m, p, q, m = fit_bass_model(cen_perc)
+
+    # plot bass model and diffusion curve
+    plt.plot(cen_perc, label="Random", color='black')
+    plt.plot(bass_m, label="Bass model", color='red')
+    plt.xlabel('Time')
+    plt.ylabel('Percentage of adopters')
+    plt.title(f"Fit of Bass model on {name}")
+    plt.legend()
+    plt.savefig("../results/central_bass_model.png")
+    plt.show()
+
+    print(f"p = {p}, q = {q}, m = {m}")
+
+    # fit bass model and get parameters
+    bass_m, p, q, m = fit_bass_model(mar_perc)
+
+    # plot bass model and diffusion curve
+    plt.plot(mar_perc, label="Random", color='black')
+    plt.plot(bass_m, label="Bass model", color='red')
+    plt.xlabel('Time')
+    plt.ylabel('Percentage of adopters')
+    plt.title(f"Fit of Bass model on {name}")
+    plt.legend()
+    plt.savefig("../results/marginal_bass_model.png")
+    plt.show()
+
+    print(f"p = {p}, q = {q}, m = {m}")
+
 
 
 
