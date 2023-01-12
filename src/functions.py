@@ -124,8 +124,9 @@ def generate_random_graph(G=None, random_type="ER", nodes=None, edges=None):
     elif random_type == "newman_WS":
         # Newmann-Watts-Strogatz random graph
         g_ran = random_type_dict[random_type](n=n, k=int(m/n)*2, p=0.01)
+
     g_ran = nx.Graph(g_ran)
-    #print(f"Number of nodes and edges for {random_type}: {g_ran.number_of_nodes()} {g_ran.number_of_edges()}")
+
     return g_ran
 
 def graph_preprocessing(G):
@@ -230,9 +231,9 @@ def spread_of_information(graph, timestamp, percentage_initial_adopt, type_initi
     t = timestamp
     # list of adopters
     adopters_list = [initial_adopt_num]
-    for i in range(t):
+    for i in range(1, t):
         # if full diffusion happened then stop the process
-        if i != 0 and adopters_list[-1] == n:
+        if i != 1 and adopters_list[-1] == n:
             # fill the list with the last value which is the number of nodes
             adopters_list += [n] * (t - len(adopters_list) + 1)
             #print(f'Diffusion already stopped at time step: {i+1}')
@@ -302,7 +303,7 @@ def make_diffusions_and_average(graph, num_simulations, timestamp, percentage_in
     averaged_diffusion_list = np.mean(cumulated_diffusion_list, axis=0)
     return averaged_diffusion_list
 
-def run_simulation_and_plot(G, num_simulations, time_steps, percentage_initial_adopt, centrality_measure, name):
+def run_simulation(G, num_simulations, time_steps, percentage_initial_adopt, centrality_measure, name):
     """
     Runs the simulation and plots the results
     Parameters
@@ -321,7 +322,7 @@ def run_simulation_and_plot(G, num_simulations, time_steps, percentage_initial_a
         The name of the graph
     Returns
     -------
-    plot
+    ran_perc, ran_cent, ran_diff : list
     """
     # run the simulation
     ran = make_diffusions_and_average(G, num_simulations, time_steps, percentage_initial_adopt, 'random', centrality_measure)
@@ -338,16 +339,26 @@ def run_simulation_and_plot(G, num_simulations, time_steps, percentage_initial_a
     df_cen = pd.DataFrame(cen_perc, columns=['central'])
     df_mar = pd.DataFrame(mar_perc, columns=['marginal'])
     df = pd.concat([df_ran, df_cen, df_mar], axis=1)
-    df.rename(columns={0: 'timestamp'}, inplace=True)
+
 
     # save the results to a csv file
     df.to_csv(f"../results/{name}/{name}_{centrality_measure}_results.csv")
 
     return ran_perc, cen_perc, mar_perc
 
-
 def plotting_adopters(diff_data, name):
-    """plot for same graphs but different adopter types"""
+    """
+    This function plots for the diffusion for the same graphs different adopter types
+    Parameters
+    ----------
+    diff_data : list
+        List of lists, each list contains the diffusion for a different adopter type
+    name : str
+        The name of the graph
+    Returns
+    -------
+    None
+    """
 
     ran_perc, cen_perc, mar_perc = diff_data
 
@@ -365,7 +376,19 @@ def plotting_adopters(diff_data, name):
     plt.show()
 
 def plotting_structure(diff_data, name):
-    """plot for different graphs but same adopter types"""
+    """
+    This function plots the diffusion for different graphs
+    Parameters
+    ----------
+    diff_data : list
+        List of tuples containing the diffusion data for each graph
+    name : str
+        The name of the graph
+
+    Returns
+    -------
+    None
+    """
     facebook, er, ws, ba, nw_ws = diff_data
 
     # plot the number of adopters over time with seaborn
@@ -384,7 +407,18 @@ def plotting_structure(diff_data, name):
     plt.show()
 
 def plotting_bass_model(diff_data, name): # right now ONLY prints bass model on random!
-    """plot the bass model along with the inputted diffusion curve"""
+    """
+    This function plots the Bass model along with the inputted diffusion curve of a new idea/product given the input data.
+    Parameters
+    ----------
+    diff_data : list of lists
+        A list of lists, where each list represents the percentage of adopters of the new product over time with different types of initial adopters.
+    name : str
+        The name of the graph
+    Returns
+    -------
+    None
+    """
     ran_perc, cen_perc, mar_perc = diff_data
 
     # fit bass model and get parameters

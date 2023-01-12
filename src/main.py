@@ -1,16 +1,20 @@
 from functions import *
+import time
 
 def main():
+    start = time.time()
+
     # simulation parameters
-    num_simulations = 1
+    num_simulations = 5
+    num_random_graphs = 5
     time_steps = 15
     percentage_initial_adopt = 0.025
 
     averaged_results = dict()
-    # facebook graph
 
+    # facebook graph
     # Create a graph from edge list
-    G_fb = nx.read_edgelist('data/facebook_combined.txt', delimiter=' ') # G_fb = nx.read_edgelist('../data/facebook_combined.txt', delimiter=' ')
+    G_fb = nx.read_edgelist('../data/facebook_combined.txt', delimiter=' ') # G_fb = nx.read_edgelist('../data/facebook_combined.txt', delimiter=' ')
 
     # preprocess the graph
     G_fb = graph_preprocessing(G_fb)
@@ -19,15 +23,14 @@ def main():
     # show_and_save_prop(G_fb, 'facebook')
 
     # run the simulation
-    ran_avg, cen_avg, mar_avg = run_simulation_and_plot(G_fb, num_simulations, time_steps, percentage_initial_adopt, 'degree', 'facebook')
+    ran_avg, cen_avg, mar_avg = run_simulation(G_fb, num_simulations, time_steps, percentage_initial_adopt, 'degree', 'facebook')
 
     # save results
     averaged_results['facebook'] = (ran_avg, cen_avg, mar_avg)
 
     # random graphs
-
     collected_results = dict()
-    for i in range(num_simulations):
+    for i in range(num_random_graphs):
         # create random graphs
         G_er = generate_random_graph(G_fb, 'ER')
         G_ws = generate_random_graph(G_fb, 'WS')
@@ -41,16 +44,16 @@ def main():
         G_nw_ws = graph_preprocessing(G_nw_ws)
 
         # show properties
-        # show_and_save_prop(G_er, 'ER')
-        # show_and_save_prop(G_ws, 'WS')
-        # show_and_save_prop(G_ba, 'BA')
-        # show_and_save_prop(G_nw_ws, 'newman_WS')
+        show_and_save_prop(G_er, 'ER')
+        show_and_save_prop(G_ws, 'WS')
+        show_and_save_prop(G_ba, 'BA')
+        show_and_save_prop(G_nw_ws, 'newman_WS')
 
         # run the simulation
-        er_ran_perc, er_cen_perc, er_mar_perc = run_simulation_and_plot(G_er, num_simulations, time_steps, percentage_initial_adopt, 'degree', 'ER')
-        ws_ran_perc, ws_cen_perc, ws_mar_perc = run_simulation_and_plot(G_ws, num_simulations, time_steps, percentage_initial_adopt, 'degree', 'WS')
-        ba_ran_perc, ba_cen_perc, ba_mar_perc = run_simulation_and_plot(G_ba, num_simulations, time_steps, percentage_initial_adopt, 'degree', 'BA')
-        nw_ws_ran_perc, nw_ws_cen_perc, nw_ws_mar_perc = run_simulation_and_plot(G_nw_ws, num_simulations, time_steps, percentage_initial_adopt, 'degree', 'newman_WS')
+        er_ran_perc, er_cen_perc, er_mar_perc = run_simulation(G_er, num_simulations, time_steps, percentage_initial_adopt, 'degree', 'ER')
+        ws_ran_perc, ws_cen_perc, ws_mar_perc = run_simulation(G_ws, num_simulations, time_steps, percentage_initial_adopt, 'degree', 'WS')
+        ba_ran_perc, ba_cen_perc, ba_mar_perc = run_simulation(G_ba, num_simulations, time_steps, percentage_initial_adopt, 'degree', 'BA')
+        nw_ws_ran_perc, nw_ws_cen_perc, nw_ws_mar_perc = run_simulation(G_nw_ws, num_simulations, time_steps, percentage_initial_adopt, 'degree', 'newman_WS')
 
         # save results in dictionary
         if i == 0:
@@ -75,7 +78,6 @@ def main():
     collected_results.clear()
 
     # plotting the results
-
     # plotting same graph different adopters
     for key in averaged_results:
         plotting_adopters(averaged_results[key], key)
@@ -86,7 +88,10 @@ def main():
     plotting_structure((averaged_results["facebook"][2], averaged_results["ER"][2], averaged_results["WS"][2], averaged_results["BA"][2], averaged_results["newman_WS"][2]), "marginal")
 
     # plotting bass model on facebook network with random adopters
-    plotting_bass_model(averaged_results["facebook"], "Facebook random")
+    #plotting_bass_model(averaged_results["facebook"], "Facebook random")
+
+    end = time.time()
+    print("Time taken: ", end - start)
 
 if __name__ == '__main__':
     main()
