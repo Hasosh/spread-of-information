@@ -30,10 +30,12 @@ def show_and_save_prop(G, name):
     # graph properties
     n = G.number_of_nodes()
     m = G.number_of_edges()
-    cc = nx.transitivity(G)
-    diameter = nx.diameter(G)
-    avg_path_length = nx.average_shortest_path_length(G)
-    density = nx.density(G)
+    # graph connectedness needs to be checked for the following measures, otherwise error is thrown
+    if nx.is_connected(G):
+        cc = nx.transitivity(G)
+        diameter = nx.diameter(G)
+        avg_path_length = nx.average_shortest_path_length(G)
+        density = nx.density(G)
 
     # create or append results to csv file
     if not os.path.exists(f"../results/{name}"):
@@ -53,23 +55,24 @@ def show_and_save_prop(G, name):
         print(f"Graph {name} has clustering coefficient {cc}, diameter {diameter}, average path length {avg_path_length} and density {density}")
 
     # draw degree rank plot
-    degree_freq = nx.degree_histogram(G)
-    degrees = range(len(degree_freq))
-    
-    fig, ax = plt.subplots()
+    if name not in ["ER", "WS", "BA", "newman_WS"]:
+        degree_freq = nx.degree_histogram(G)
+        degrees = range(len(degree_freq))
+        
+        fig, ax = plt.subplots()
 
-    ax.loglog(degrees, degree_freq,'go-')
-    ax.set_title(f"Degree Distribution of {name} dataset (Log-Log Scale)")
-    ax.set_ylabel('Degree')
-    ax.set_xlabel('Frequency')
-    ax.xaxis.set_minor_formatter(ScalarFormatter())
-    ax.xaxis.set_minor_formatter(NullFormatter())
+        ax.loglog(degrees, degree_freq,'go-')
+        ax.set_title(f"Degree Distribution of {name} dataset (Log-Log Scale)")
+        ax.set_ylabel('Degree')
+        ax.set_xlabel('Frequency')
+        ax.xaxis.set_minor_formatter(ScalarFormatter())
+        ax.xaxis.set_minor_formatter(NullFormatter())
 
-    fig.tight_layout()
-    plt.show()
-    fig.savefig(f"../results/{name}/{name}_degree_distribution.png")
+        fig.tight_layout()
+        plt.show()
+        fig.savefig(f"../results/{name}/{name}_degree_distribution.png")
 
-def generate_random_graph(G=None, nodes=None, edges=None, random_type="ER"):
+def generate_random_graph(G=None, random_type="ER", nodes=None, edges=None):
     """
         This function takes a graph G as an input and generates a random graph
         of the specified type and number of nodes and edges.
@@ -98,15 +101,31 @@ def generate_random_graph(G=None, nodes=None, edges=None, random_type="ER"):
     assert n is not None and m is not None, "Please provide valid input for number of nodes and edges"
 
     # generate desired random graph
-    random_type_dict = {"ER": nx.fast_gnp_random_graph,
+    random_type_dict = {"ER": nx.gnm_random_graph,
                         "WS": nx.watts_strogatz_graph,
                         "BA": nx.barabasi_albert_graph,
                         "KB": nx.navigable_small_world_graph,
                         "newman_WS": nx.newman_watts_strogatz_graph}
     if random_type not in random_type_dict:
         raise ValueError(f"Invalid random_type: {random_type}. Please choose one of ER / WS / BA / KB / newman_WS")
-    g_ran = random_type_dict[random_type](n, m)
+    if random_type == "ER":
+        # Erdös Renyi random graph
+        g_ran = random_type_dict[random_type](n=n, m=m)
+    elif random_type == "WS":
+        # Watts Strogatz random graph: rewiring with p = 0.01: high clustering and low diameter
+        g_ran = random_type_dict[random_type](n=n, k=int(m/n)*2, p=0.01) 
+    elif random_type == "BA":
+        # Barabasi Albert random graph
+        g_ran = random_type_dict[random_type](n=n, m=int(m/n))
+    elif random_type == "KB":
+        # Kleinberg model random graph
+        lattice_length = math.ceil(math.sqrt(n))
+        g_ran = random_type_dict[random_type](n=lattice_length, p=1, q=1, r=10, dim=2)
+    elif random_type == "newman_WS":
+        # Newmann-Watts-Strogatz random graph
+        g_ran = random_type_dict[random_type](n=n, k=int(m/n)*2, p=0.01)
     g_ran = nx.Graph(g_ran)
+    #print(f"Number of nodes and edges for {random_type}: {g_ran.number_of_nodes()} {g_ran.number_of_edges()}")
     return g_ran
 
 def graph_preprocessing(G):
@@ -149,7 +168,7 @@ def fit_bass_model(data):
 
     popt, pcov = curve_fit(c_t, xdata=range(len(data)), ydata=data)
     p, q, m = popt[0], popt[1], popt[2]
-    return c_t(range(len(data)), p, q, m)
+    return c_t(range(len(data)), p, q, m), p, q, m
 
 def spread_of_information(graph, timestamp, percentage_initial_adopt, type_initial_adopt, centrality_measure):
     """
@@ -185,7 +204,7 @@ def spread_of_information(graph, timestamp, percentage_initial_adopt, type_initi
         sorted_nodes = sorted(cc, key=cc.get, reverse=True)
 
     # eigenvector centrality for each node
-    ec = nx.eigenvector_centrality(G)
+    ec = nx.eigenvector_centrality(G, tol=1.0e-3)
     # normalize the eigenvector centrality to be between 0 and 1
     ec = {k: v / max(ec.values()) for k, v in ec.items()}
 
@@ -200,7 +219,7 @@ def spread_of_information(graph, timestamp, percentage_initial_adopt, type_initi
         for node in sorted_nodes[:initial_adopt_num]:
             G.nodes[node]['status'] = 1
     elif type_initial_adopt == 'marginal':
-        for node in sorted_nodes[-(initial_adopt_num)]:
+        for node in sorted_nodes[-initial_adopt_num:]:
             G.nodes[node]['status'] = 1
     else:
         for i in range(initial_adopt_num):
@@ -324,6 +343,14 @@ def run_simulation_and_plot(G, num_simulations, time_steps, percentage_initial_a
     # save the results to a csv file
     df.to_csv(f"../results/{name}/{name}_{centrality_measure}_results.csv")
 
+    return ran_perc, cen_perc, mar_perc
+
+
+def plotting_adopters(diff_data, name):
+    """plot for same graphs but different adopter types"""
+
+    ran_perc, cen_perc, mar_perc = diff_data
+
     # plot the number of adopters over time with seaborn
     sns.set_style("whitegrid")
     plt.figure(figsize=(10, 6))
@@ -337,17 +364,41 @@ def run_simulation_and_plot(G, num_simulations, time_steps, percentage_initial_a
     plt.savefig(f"../results/{name}/{name}_diff.png")
     plt.show()
 
+def plotting_structure(diff_data, name):
+    """plot for different graphs but same adopter types"""
+    facebook, er, ws, ba, nw_ws = diff_data
 
+    # plot the number of adopters over time with seaborn
+    sns.set_style("whitegrid")
+    plt.figure(figsize=(10, 6))
+    plt.plot(facebook, label='Facebook', color='yellow')
+    plt.plot(er, label='ER', color='red')
+    plt.plot(ws, label='WS', color='green')
+    plt.plot(ba, label='BA', color='blue')
+    plt.plot(nw_ws, label='NW_WS', color='black')
+    plt.xlabel('Time steps')
+    plt.ylabel('Percentage of adopters')
+    plt.title(f"{name} initial adopters in different networks")
+    plt.legend()
+    plt.savefig(f"../results/{name}_diff.png")
+    plt.show()
 
-# # fit of bass model
-# fig, ax = plt.subplots()
-# ax.plot(ran_per, label="Random")
-# ax.plot(fit_bass_model(ran_perc), label="Bass model")
-# ax.set_xlabel('Time')
-# ax.set_ylabel('Fit of bass model')
-# #
-# plt.legend()
-# plt.show()
-#
+def plotting_bass_model(diff_data, name): # right now ONLY prints bass model on random!
+    """plot the bass model along with the inputted diffusion curve"""
+    ran_perc, cen_perc, mar_perc = diff_data
+
+    # fit bass model and get parameters
+    bass_m, p, q, m = fit_bass_model(ran_perc)
+
+    # plot bass model and diffusion curve
+    plt.plot(ran_perc, label="Random", color='black')
+    plt.plot(bass_m, label="Bass model", color='red')
+    plt.xlabel('Time')
+    plt.ylabel('Percentage of adopters')
+    plt.title(f"Fit of Bass model on {name}")
+    plt.legend()
+    plt.savefig(f"../results/{name}_bass_model.png")
+    plt.show()
+
 
 
