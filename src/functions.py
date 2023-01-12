@@ -36,7 +36,7 @@ def show_and_save_prop(G, name):
     density = nx.density(G)
 
     # create or append results to csv file
-    if not os.path.exists(f"../results/{name}/{name}.csv"):
+    if not os.path.exists(f"../results/{name}"):
         #create a new directory for the graph
         os.makedirs(f"../results/{name}")
         # create a dataframe with the properties and save it as csv
