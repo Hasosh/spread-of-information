@@ -301,6 +301,10 @@ def spread_of_information(graph, timestamp, percentage_initial_adopt, type_initi
                         + G.nodes[node]["neighbor_influence"]
                     ) / 3
 
+        # update adoption after first full node iteration, when all probabilities are updated
+        for node in G.nodes():
+            # if the node is not an adopter
+            if G.nodes[node]["status"] == 0:        
                 # sample from a uniform distribution and check if the probability is greater than the sample
                 if random.random() < G.nodes[node]["probability"]:
                     G.nodes[node]["status"] = 1
