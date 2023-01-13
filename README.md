@@ -39,8 +39,5 @@ The results of the simulation will be saved in the results directory in the form
 
 The results of the simulation will also be saved in a dictionary, which includes the average results of the multiple runs of the simulation on each graph. The dictionary can be used for further analysis and comparison of the results.
 
-**Note**
-The code runs on csv file with edge list, you can use your own dataset and make the necessary changes in the code.
-
 
 
