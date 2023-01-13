@@ -1,5 +1,6 @@
 from functions import *
 import time
+import matplotlib.pyplot as plt
 
 def main():
     start = time.time()
@@ -93,8 +94,13 @@ def main():
     plotting_structure((averaged_results['facebook_politician'][2], averaged_results["ER"][2], averaged_results["WS"][2]
                         , averaged_results["BA"][2], averaged_results["newman_WS"][2]), "marginal")
 
-    #plotting bass model on facebook network
-    plotting_bass_model(averaged_results['facebook_politician'], "facebook_politician")
+    # plotting bass model on facebook network
+    plotting_bass_model(averaged_results['facebook_politician'][0], "facebook_politician", "random")
+    plotting_bass_model(averaged_results['facebook_politician'][1], "facebook_politician", "central")
+    plotting_bass_model(averaged_results['facebook_politician'][2], "facebook_politician", "marginal")
+
+    # show all plots at once at the end
+    plt.show()
 
     end = time.time()
     print("Time taken: ", end - start)

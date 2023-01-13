@@ -36,6 +36,8 @@ def show_and_save_prop(G, name):
         diameter = nx.diameter(G)
         avg_path_length = nx.average_shortest_path_length(G)
         density = nx.density(G)
+    else:
+        cc, diameter, avg_path_length, density = -1, -1, -1, -1
 
     # create or append results to csv file
     if not os.path.exists(f"../results/{name}"):
@@ -69,7 +71,7 @@ def show_and_save_prop(G, name):
         ax.xaxis.set_minor_formatter(NullFormatter())
 
         fig.tight_layout()
-        plt.show()
+        plt.show(block=False)
         fig.savefig(f"../results/{name}/{name}_degree_distribution.png")
 
 def generate_random_graph(G=None, random_type="ER", nodes=None, edges=None):
@@ -340,11 +342,39 @@ def run_simulation(G, num_simulations, time_steps, percentage_initial_adopt, cen
     df_mar = pd.DataFrame(mar_perc, columns=['marginal'])
     df = pd.concat([df_ran, df_cen, df_mar], axis=1)
 
+    # create or append results to csv file
+    if not os.path.exists(f"../results/{name}"):
+        #create a new directory for the graph
+        os.makedirs(f"../results/{name}")
 
     # save the results to a csv file
     df.to_csv(f"../results/{name}/{name}_{centrality_measure}_results.csv")
 
     return ran_perc, cen_perc, mar_perc
+
+def take_sufficient_index(lists):
+    """
+    This function returns the index where after the index, none of the lists have any more value changes
+    ----------
+    lists : list
+        List of lists, each list contains a diffusion 
+    Returns
+    -------
+    maximum index: int
+        index where plot only shows relevant information
+    """
+    maximum_index = len(lists[0])
+    for l in lists:
+        old_value = l[-1]
+        for index, new_value in enumerate(l[::-1][1:], start=1):
+            if new_value != old_value:
+                if index < maximum_index:
+                    maximum_index = index
+                break
+    if maximum_index == len(lists[0]) or maximum_index == 1 or maximum_index == 2:
+        return len(lists[0])
+    else:
+        return len(lists[0]) - maximum_index + 2
 
 def plotting_adopters(diff_data, name):
     """
@@ -362,6 +392,11 @@ def plotting_adopters(diff_data, name):
 
     ran_perc, cen_perc, mar_perc = diff_data
 
+    # crop the lists to relevant t-window
+    suf_t = take_sufficient_index([ran_perc, cen_perc, mar_perc])
+    print(suf_t)
+    ran_perc, cen_perc, mar_perc = ran_perc[:suf_t], cen_perc[:suf_t], mar_perc[:suf_t]
+
     # plot the number of adopters over time with seaborn
     sns.set_style("whitegrid")
     plt.figure(figsize=(10, 6))
@@ -373,7 +408,7 @@ def plotting_adopters(diff_data, name):
     plt.title(f"{name} network")
     plt.legend()
     plt.savefig(f"../results/{name}/{name}_diff.png")
-    plt.show()
+    plt.show(block=False)
 
 def plotting_structure(diff_data, name):
     """
@@ -391,6 +426,11 @@ def plotting_structure(diff_data, name):
     """
     facebook, er, ws, ba, nw_ws = diff_data
 
+    # crop the lists to relevant t-window
+    suf_t = take_sufficient_index([facebook, er, ws, ba, nw_ws])
+    print(suf_t)
+    facebook, er, ws, ba, nw_ws = facebook[:suf_t], er[:suf_t], ws[:suf_t], ba[:suf_t], nw_ws[:suf_t]
+
     # plot the number of adopters over time with seaborn
     sns.set_style("whitegrid")
     plt.figure(figsize=(10, 6))
@@ -404,9 +444,9 @@ def plotting_structure(diff_data, name):
     plt.title(f"{name} initial adopters in different networks")
     plt.legend()
     plt.savefig(f"../results/{name}_diff.png")
-    plt.show()
+    plt.show(block=False)
 
-def plotting_bass_model(diff_data, name): # right now ONLY prints bass model on random!
+def plotting_bass_model(perc, name, type_initial_adopt): # right now ONLY prints bass model on random!
     """
     This function plots the Bass model along with the inputted diffusion curve of a new idea/product given the input data.
     Parameters
@@ -419,53 +459,25 @@ def plotting_bass_model(diff_data, name): # right now ONLY prints bass model on 
     -------
     None
     """
-    ran_perc, cen_perc, mar_perc = diff_data
+
+    # crop the lists to relevant t-window
+    suf_t = take_sufficient_index([perc])
+    print(suf_t)
+    perc = perc[:suf_t]
 
     # fit bass model and get parameters
-    bass_m, p, q, m = fit_bass_model(ran_perc)
+    bass_m, p, q, m = fit_bass_model(perc)
 
     # plot bass model and diffusion curve
-    plt.plot(ran_perc, label="Random", color='black')
+    sns.set_style("whitegrid")
+    plt.figure(figsize=(10, 6))
+    plt.plot(perc, label=f"{type_initial_adopt}", color='black')
     plt.plot(bass_m, label="Bass model", color='red')
     plt.xlabel('Time')
     plt.ylabel('Percentage of adopters')
     plt.title(f"Fit of Bass model on {name}")
     plt.legend()
-    plt.savefig("../results/random_bass_model.png")
-    plt.show()
+    plt.savefig(f"../results/{type_initial_adopt}_bass_model.png")
 
     print(f"p = {p}, q = {q}, m = {m}")
-
-    # fit bass model and get parameters
-    bass_m, p, q, m = fit_bass_model(cen_perc)
-
-    # plot bass model and diffusion curve
-    plt.plot(cen_perc, label="Random", color='black')
-    plt.plot(bass_m, label="Bass model", color='red')
-    plt.xlabel('Time')
-    plt.ylabel('Percentage of adopters')
-    plt.title(f"Fit of Bass model on {name}")
-    plt.legend()
-    plt.savefig("../results/central_bass_model.png")
-    plt.show()
-
-    print(f"p = {p}, q = {q}, m = {m}")
-
-    # fit bass model and get parameters
-    bass_m, p, q, m = fit_bass_model(mar_perc)
-
-    # plot bass model and diffusion curve
-    plt.plot(mar_perc, label="Random", color='black')
-    plt.plot(bass_m, label="Bass model", color='red')
-    plt.xlabel('Time')
-    plt.ylabel('Percentage of adopters')
-    plt.title(f"Fit of Bass model on {name}")
-    plt.legend()
-    plt.savefig("../results/marginal_bass_model.png")
-    plt.show()
-
-    print(f"p = {p}, q = {q}, m = {m}")
-
-
-
-
+    plt.show(block=False)
