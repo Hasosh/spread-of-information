@@ -307,7 +307,7 @@ def make_diffusions_and_average(graph, num_simulations, timestamp, percentage_in
 
 def run_simulation(G, num_simulations, time_steps, percentage_initial_adopt, centrality_measure, name):
     """
-    Runs the simulation and plots the results
+    Runs the simulation for the given graph and saves the results in a csv file
     Parameters
     ----------
     G : NetworkX Graph
