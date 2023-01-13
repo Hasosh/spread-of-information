@@ -1,4 +1,4 @@
-## This project aims to study the diffusion of innovation on social networks. The project includes several functions for the following purposes:
+## This project aims to study the spread of information in social media networks. The project includes several functions for the following purposes:
 
 - Generating random graphs with different models (Erdos-Renyi, Watts-Strogatz, Barabasi-Albert, and Newman-Watts)
 - Preprocessing graphs
@@ -30,8 +30,6 @@ To run the simulation, you need to run the main function in the main.py file. Th
 - percentage_initial_adopt: the percentage of nodes that will be selected as initial adopters.
 - centrality_measures: the centrality measures that will be used to select the initial adopters.
 - name: the name of the graph that will be used in the results.
-
-You can change the values of these parameters according to your needs.
 
 ## Results
 
