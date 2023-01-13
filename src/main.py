@@ -16,10 +16,10 @@ def main():
     # simulation parameters
     num_simulations = 5
     num_random_graphs = 5
-    time_steps = 20
-    percentage_initial_adopt = 0.01
+    time_steps = 25
+    percentage_initial_adopt = 0.025
     centrality_measures = "degree"  # 'pagerank' or 'clossness'
-    name = "facebook_politician"
+    name = "facebook_public_figure"
 
     averaged_results = dict()
 
